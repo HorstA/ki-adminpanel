@@ -13,6 +13,26 @@ def get_poetry_data():
         return []
 
 
+# Idee von Copilot, aber nicht gut:
+
+# def get_base_path():
+#     if getattr(sys, 'frozen', False):  # Check if the application is frozen by PyInstaller
+#         return sys._MEIPASS
+#     return os.path.dirname(os.path.abspath(__file__))
+
+# def setenv(key, value):
+#     base_path = get_base_path()
+#     dotenv_path = find_dotenv()
+#     if not dotenv_path:
+#         dotenv_path = os.path.join(base_path, '.env')
+#         open(dotenv_path, "w").close()
+#     set_key(dotenv_path, key, value)
+
+# sh auch: https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+
+# Ende
+
+
 class AppSettings:
     true_values = [
         "true",
@@ -26,12 +46,15 @@ class AppSettings:
 
     def __init__(self):
         if not find_dotenv():
+            print("Creating .env file, find_dotenv() returned nothing")
             dotenv_path = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), ".env"
             )
+            print(f"Creating .env file at {dotenv_path}")
             with open(dotenv_path, "w") as f:
                 f.write("")
-        load_dotenv(find_dotenv())  # load enviroment variables once
+        print("Loading .env file...")
+        load_dotenv()  # load enviroment variables once
 
         self.API_USER = os.getenv("API_USER")
         self.API_PWD = os.getenv("API_PWD")
@@ -54,5 +77,11 @@ class AppSettings:
         return os.getenv(key, default)
 
     def setenv(self, key: str, value=None):
-        set_key(dotenv_path=find_dotenv(), key_to_set=key, value_to_set=value)
-        load_dotenv(find_dotenv())  # reload enviroment variables
+        # set_key(dotenv_path=find_dotenv(), key_to_set=key, value_to_set=value)
+        # load_dotenv(find_dotenv())  # reload enviroment variables
+
+        dotenv_path = find_dotenv()
+        if not dotenv_path:
+            dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+            open(dotenv_path, "w").close()
+        set_key(dotenv_path, key, value)
