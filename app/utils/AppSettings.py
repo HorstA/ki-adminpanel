@@ -1,4 +1,6 @@
 import os
+import shutil
+import sys
 import tomllib
 
 from dotenv import find_dotenv, load_dotenv, set_key
@@ -32,6 +34,26 @@ def get_poetry_data():
 
 # Ende
 
+# andere Idee von Copilot
+
+
+# def __init__(self):
+#     self.dotenv_path = os.path.join(os.path.expanduser("~"), ".tattle_env")
+#     if not os.path.exists(self.dotenv_path):
+#         print("Creating .env file, find_dotenv() returned nothing")
+#         print(f"Creating .env file at {self.dotenv_path}")
+#         with open(self.dotenv_path, "w") as f:
+#             f.write("")
+#     print("Loading .env file...")
+#     load_dotenv(self.dotenv_path)  # load environment variables once
+
+# ...
+
+# def setenv(self, key, value):
+#     set_key(self.dotenv_path, key, value)
+
+# Ende2
+
 
 class AppSettings:
     true_values = [
@@ -45,16 +67,30 @@ class AppSettings:
     ]
 
     def __init__(self):
-        if not find_dotenv():
-            print("Creating .env file, find_dotenv() returned nothing")
-            dotenv_path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), ".env"
-            )
-            print(f"Creating .env file at {dotenv_path}")
-            with open(dotenv_path, "w") as f:
-                f.write("")
-        print("Loading .env file...")
-        load_dotenv()  # load enviroment variables once
+        self.app_dir = os.path.join(os.path.expanduser("~"), ".tattle")
+        if not os.path.exists(self.app_dir):
+            os.makedirs(self.app_dir)
+            print(f"Created directory at {self.app_dir}")
+
+        self.dotenv_path = os.path.join(self.app_dir, ".env")
+        if not os.path.exists(self.dotenv_path):
+            print(f"Creating .env file at {self.dotenv_path}")
+            try:
+                initial_env_path = self.get_resource_path(
+                    os.path.join("resources", "env.ini")
+                )
+                shutil.copy(initial_env_path, self.dotenv_path)
+                print(
+                    f"Copied initial .env file from {initial_env_path} to {self.dotenv_path}"
+                )
+            except FileNotFoundError:
+                print(
+                    f"Initial env.ini file not found, creating an empty .env file at {self.dotenv_path}"
+                )
+                with open(self.dotenv_path, "w") as f:
+                    f.write("")
+
+        load_dotenv(self.dotenv_path)  # load enviroment variables once
 
         self.API_USER = os.getenv("API_USER")
         self.API_PWD = os.getenv("API_PWD")
@@ -73,15 +109,18 @@ class AppSettings:
             os.getenv("WATCH_ON_START", "False").lower() in self.true_values
         )
 
+    def get_resource_path(self, relative_path):
+        """Get absolute path to resource, works for dev and for PyInstaller"""
+        base_path = getattr(
+            sys,
+            "_MEIPASS",
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."),
+        )
+        return os.path.join(base_path, relative_path)
+
     def getenv(self, key: str, default=None):
         return os.getenv(key, default)
 
     def setenv(self, key: str, value=None):
-        # set_key(dotenv_path=find_dotenv(), key_to_set=key, value_to_set=value)
-        # load_dotenv(find_dotenv())  # reload enviroment variables
-
-        dotenv_path = find_dotenv()
-        if not dotenv_path:
-            dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
-            open(dotenv_path, "w").close()
-        set_key(dotenv_path, key, value)
+        set_key(dotenv_path=self.dotenv_path, key_to_set=key, value_to_set=value)
+        load_dotenv(find_dotenv())  # reload enviroment variables

@@ -26,8 +26,10 @@ The KI Admin Panel is a fat client application designed to manage and monitor th
 
 ## Installation
 
-TODO: later
-old: poetry run pyinstaller .\app\main.py --collect-submodules utils --onefile --name tattle
+There is no installation, just start the .exe file
+
+## Create exe with pyinstaller
+
 poetry run pyinstaller main.spec
 
 ## Usage
