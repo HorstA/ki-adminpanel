@@ -4,7 +4,6 @@ import tkinter as tk
 
 import customtkinter as ctk
 from PIL import Image
-
 from utils.AppSettings import AppSettings
 from utils.WatchTattle import WatchTattle
 

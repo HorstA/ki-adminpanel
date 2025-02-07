@@ -1,15 +1,17 @@
 import customtkinter as ctk
-
 from AdminFrame import AdminFrame
 from HomeFrame import HomeFrame
 from ImportFrame import ImportFrame
+from loguru import logger
 from NavigationFrame import NavigationFrame
 from ScanFrame import ScanFrame
+from utils.utils import init_app
 
 
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
+        init_app()
 
         self.title("KI-Tools Admin Panel")
         self.geometry("700x450")

@@ -4,8 +4,8 @@ import tkinter as tk
 
 import customtkinter as ctk
 import requests
+from loguru import logger
 from PIL import Image
-
 from utils.AppSettings import AppSettings
 
 settings = AppSettings()
@@ -87,7 +87,8 @@ class ImportFrame(ctk.CTkFrame):
                     self.result_label.configure(text=text)
                     print(rv.json())
                 except Exception as e:
-                    pass
+                    logger.error(f"Error in import_file: {e}")
+                    self.result_label.configure(text=f"Error: {e}")
                 finally:
                     self.import_button.configure(
                         state=tk.NORMAL, text="Datei auswählen"

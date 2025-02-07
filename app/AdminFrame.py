@@ -3,6 +3,7 @@ import tkinter as tk
 
 import customtkinter as ctk
 import requests
+from loguru import logger
 
 url = "http://127.0.0.1:8080/admin/apilog"
 
@@ -36,6 +37,7 @@ class AdminFrame(ctk.CTkFrame):
                 lines = rv.json().get("lines", [])
                 self.update_textbox(lines)
             except Exception as e:
+                logger.error(f"Error: {e}")
                 pass
 
         threading.Thread(target=task).start()

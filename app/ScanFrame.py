@@ -4,8 +4,8 @@ import tkinter as tk
 
 import customtkinter as ctk
 import requests
+from loguru import logger
 from PIL import Image
-
 from utils.AppSettings import AppSettings
 
 settings = AppSettings()
@@ -77,7 +77,8 @@ class ScanFrame(ctk.CTkFrame):
                 self.result_label.configure(text=text)
                 print(rv.json())
             except Exception as e:
-                pass
+                logger.error(f"Error in scan_directory: {e}")
+                self.result_label.configure(text=f"Error: {e}")
             finally:
                 self.scan_button.configure(state=tk.NORMAL, text="Scan")
 
