@@ -19,7 +19,8 @@ class ScanFrame(ctk.CTkFrame):
             os.path.dirname(os.path.realpath(__file__)), "resources"
         )
         image_icon_image = ctk.CTkImage(
-            Image.open(os.path.join(image_path, "image_icon_light.png")), size=(20, 20)
+            Image.open(os.path.join(image_path, "document_scanner_64dp_w.png")),
+            size=(20, 20),
         )
 
         label = ctk.CTkLabel(

@@ -1,3 +1,4 @@
+import os
 import customtkinter as ctk
 from AdminFrame import AdminFrame
 from HomeFrame import HomeFrame
@@ -15,6 +16,12 @@ class App(ctk.CTk):
 
         self.title("KI-Tools Admin Panel")
         self.geometry("700x450")
+        image_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "resources",
+            "display_settings_64dp_w.ico",
+        )
+        self.iconbitmap(image_path)
 
         # set grid layout 1x2
         self.rowconfigure(0, weight=1)

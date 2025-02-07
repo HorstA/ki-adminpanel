@@ -49,7 +49,9 @@ We welcome contributions to the KI Admin Panel project! If you would like to con
 ## Info
 
 python = ">=3.12,<3.14" is because of pyinstallerpyinstaller --onefile --noconsole your_app.py
+Icon source: [Google Icons](https://fonts.google.com/icons)
 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+Check the license for Google Icons. I don't know that.

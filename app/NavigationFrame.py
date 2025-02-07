@@ -38,18 +38,31 @@ class NavigationFrame(ctk.CTkFrame):
             size=(40, 40),
         )
         self.home_image = ctk.CTkImage(
-            light_image=Image.open(os.path.join(image_path, "home_dark.png")),
-            dark_image=Image.open(os.path.join(image_path, "home_light.png")),
+            light_image=Image.open(os.path.join(image_path, "home_64dp_b.png")),
+            dark_image=Image.open(os.path.join(image_path, "home_64dp_w.png")),
             size=(20, 20),
         )
-        self.chat_image = ctk.CTkImage(
-            light_image=Image.open(os.path.join(image_path, "chat_dark.png")),
-            dark_image=Image.open(os.path.join(image_path, "chat_light.png")),
+        self.scan_image = ctk.CTkImage(
+            light_image=Image.open(
+                os.path.join(image_path, "document_scanner_64dp_b.png")
+            ),
+            dark_image=Image.open(
+                os.path.join(image_path, "document_scanner_64dp_w.png")
+            ),
             size=(20, 20),
         )
-        self.add_user_image = ctk.CTkImage(
-            light_image=Image.open(os.path.join(image_path, "add_user_dark.png")),
-            dark_image=Image.open(os.path.join(image_path, "add_user_light.png")),
+        self.import_image = ctk.CTkImage(
+            light_image=Image.open(os.path.join(image_path, "publish_64dp_b.png")),
+            dark_image=Image.open(os.path.join(image_path, "publish_64dp_w.png")),
+            size=(20, 20),
+        )
+        self.admin_image = ctk.CTkImage(
+            light_image=Image.open(
+                os.path.join(image_path, "manage_accounts_64dp_b.png")
+            ),
+            dark_image=Image.open(
+                os.path.join(image_path, "manage_accounts_64dp_w.png")
+            ),
             size=(20, 20),
         )
 
@@ -73,7 +86,7 @@ class NavigationFrame(ctk.CTkFrame):
         self.scan_button = NaviButton(
             self,
             text="Scan",
-            image=self.chat_image,
+            image=self.scan_image,
             navigation_button_event=lambda: navigation_button_event("scan"),
         )
         self.scan_button.grid(row=2, column=0, sticky="ew")
@@ -81,7 +94,7 @@ class NavigationFrame(ctk.CTkFrame):
         self.import_button = NaviButton(
             self,
             text="Import",
-            image=self.add_user_image,
+            image=self.import_image,
             navigation_button_event=lambda: navigation_button_event("import"),
         )
         self.import_button.grid(row=3, column=0, sticky="ew")
@@ -89,7 +102,7 @@ class NavigationFrame(ctk.CTkFrame):
         self.admin_button = NaviButton(
             self,
             text="Admin",
-            image=self.add_user_image,
+            image=self.admin_image,
             navigation_button_event=lambda: navigation_button_event("admin"),
         )
         self.admin_button.grid(row=4, column=0, sticky="ew")
