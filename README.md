@@ -30,7 +30,8 @@ There is no installation, just start the .exe file
 
 ## Create exe with pyinstaller
 
-poetry run pyinstaller main.spec
+use ```console=True``` in main.spec to see the console window while running
+Start packaging: ```poetry run pyinstaller main.spec```
 
 ## Usage
 
