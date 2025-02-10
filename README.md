@@ -1,10 +1,12 @@
 # KI Admin Panel
 
-Welcome to the KI Admin Panel project! First of all this is a Tattle ;-)
-When you use a docker an mount a Windows directory watchdog doesn't send any events.
-So this app runs locally on a Windows PC an tattles all these events towards an API.
-And if the app already exists, you can also do a few admin things.
+Welcome to the KI Admin Panel project! First of all this is a Tattle ;-) \
+When you use a docker an mount a Windows directory watchdog doesn't send any events. \
+So this app runs locally on a Windows PC an tattles all these events towards an API. \
+And if the app already exists, you can also do a few admin things. \
 Have fun
+
+![Screenshot](/assets/Screenshot.png)
 
 ## Table of Contents
 
