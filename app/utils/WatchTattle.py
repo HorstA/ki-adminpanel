@@ -26,14 +26,19 @@ from watchdog.observers import Observer
 
 def filter_events(func):
     def wrapper(*args, **kwargs):
-        if args[1].is_directory:
+        event: FileSystemEvent = args[1]
+        if event.is_directory:
             return
 
-        if not re.search(include_patterns, args[1].src_path) and (
-            args[1].event_type == "moved"
-            and not re.search(include_patterns, args[1].dest_path)
-        ):
-            return
+        # Apply include_patterns for all relevant events
+        if not re.search(include_patterns, event.src_path):
+            # For "moved" events, also check the destination path
+            if event.event_type == "moved" and not re.search(
+                include_patterns, event.dest_path
+            ):
+                return
+            elif event.event_type != "moved":  # For other event types
+                return
 
         time.sleep(1)  # wait so changes can be done
         return func(*args, **kwargs)

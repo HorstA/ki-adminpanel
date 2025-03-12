@@ -30,7 +30,7 @@ The KI Admin Panel is a fat client application designed to manage and monitor th
 
 There is no installation, just start the .exe file
 
-## Create exe with pyinstaller
+## Build .exe with pyinstaller
 
 use ```console=True``` in main.spec to see the console window while running
 Start packaging: ```poetry run pyinstaller main.spec```
@@ -38,6 +38,10 @@ Start packaging: ```poetry run pyinstaller main.spec```
 ## Usage
 
 TODO: later
+
+### logfile
+
+You'll find the logfile at `C:\Users\<username>\.tattle`
 
 ## Contributing
 
