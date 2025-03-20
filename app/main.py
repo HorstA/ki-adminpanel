@@ -15,7 +15,7 @@ class App(ctk.CTk):
         init_app()
 
         self.title("KI-Tools Admin Panel")
-        self.geometry("700x450")
+        self.geometry("800x450")
         image_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             "resources",
