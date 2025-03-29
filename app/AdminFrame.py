@@ -1,16 +1,16 @@
+import json
+import re
 import threading
 import tkinter as tk
-from datetime import datetime, timedelta
-import json
-from tkinter import filedialog, ttk
-from typing import List, Dict
 from collections import Counter, defaultdict
-import re
+from datetime import datetime, timedelta
+from tkinter import filedialog, ttk
+from typing import Dict, List
 
 import customtkinter as ctk
+import matplotlib.pyplot as plt
 import requests
 from loguru import logger
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
@@ -20,7 +20,7 @@ url = "http://127.0.0.1:8080/admin/apilog"
 class AdminFrame(ctk.CTkFrame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
-        
+
         self.auto_refresh = False
         self.auto_refresh_job = None
         self.log_lines: List[str] = []
@@ -28,32 +28,55 @@ class AdminFrame(ctk.CTkFrame):
         self.viz_window = None
         self.viz_notebook = None
 
-        # Top control panel
-        control_panel = ctk.CTkFrame(self, fg_color="transparent")
-        control_panel.pack(fill="x", padx=20, pady=(20, 0))
+        # Main container with padding
+        main_container = ctk.CTkFrame(self, fg_color="transparent")
+        main_container.pack(fill="both", expand=True, padx=20, pady=20)
+
+        # Header
+        header_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        header_frame.pack(fill="x", pady=(0, 15))
+
+        header_label = ctk.CTkLabel(
+            header_frame,
+            text="Log-Verwaltung",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            anchor="w",
+        )
+        header_label.pack(side="left")
+
+        # Top control panel with better styling
+        control_panel = ctk.CTkFrame(main_container)
+        control_panel.pack(fill="x", pady=(0, 15))
 
         # Time filter frame
-        time_frame = ctk.CTkFrame(control_panel, fg_color="transparent")
-        time_frame.pack(side="top", fill="x", pady=(0, 10))
+        time_filter_frame = ctk.CTkFrame(control_panel, fg_color="transparent")
+        time_filter_frame.pack(side="top", fill="x", padx=15, pady=15)
 
-        ctk.CTkLabel(time_frame, text="Zeitfilter:").pack(side="left")
+        time_label = ctk.CTkLabel(
+            time_filter_frame,
+            text="Zeitfilter:",
+            font=ctk.CTkFont(weight="bold"),
+        )
+        time_label.pack(side="left")
+
         self.time_filter = ctk.CTkOptionMenu(
-            time_frame,
+            time_filter_frame,
             values=["Gesamt", "Letzte Stunde", "Heute", "Letzten 24h", "Diese Woche"],
             command=self.apply_filters,
-            width=130
+            width=150,
         )
         self.time_filter.pack(side="left", padx=(10, 0))
 
         # Stats and Viz buttons
-        buttons_frame = ctk.CTkFrame(time_frame, fg_color="transparent")
+        buttons_frame = ctk.CTkFrame(time_filter_frame, fg_color="transparent")
         buttons_frame.pack(side="right")
-        
+
         self.viz_button = ctk.CTkButton(
             buttons_frame,
             text="Visualisierung",
             command=self.show_visualization,
-            width=130
+            width=150,
+            height=32,
         )
         self.viz_button.pack(side="right", padx=(10, 0))
 
@@ -61,93 +84,139 @@ class AdminFrame(ctk.CTkFrame):
             buttons_frame,
             text="Statistiken",
             command=self.show_statistics,
-            width=130
+            width=150,
+            height=32,
         )
         self.stats_button.pack(side="right")
 
         # Search and filter frame
         search_frame = ctk.CTkFrame(control_panel, fg_color="transparent")
-        search_frame.pack(side="top", fill="x")
+        search_frame.pack(side="top", fill="x", padx=15, pady=(0, 15))
+
+        search_label = ctk.CTkLabel(
+            search_frame,
+            text="Suche:",
+            font=ctk.CTkFont(weight="bold"),
+        )
+        search_label.pack(side="left")
 
         self.search_entry = ctk.CTkEntry(
             search_frame,
-            placeholder_text="Suchen...",
-            width=250
+            placeholder_text="Suchbegriff eingeben...",
+            width=250,
+            height=32,
         )
-        self.search_entry.pack(side="left", fill="x", expand=True)
+        self.search_entry.pack(side="left", fill="x", expand=True, padx=(10, 10))
         self.search_entry.bind("<Return>", lambda e: self.apply_filters())
+
+        search_button = ctk.CTkButton(
+            search_frame,
+            text="Suchen",
+            command=self.apply_filters,
+            width=100,
+            height=32,
+        )
+        search_button.pack(side="left", padx=(0, 10))
+
+        filter_label = ctk.CTkLabel(
+            search_frame,
+            text="Log-Level:",
+            font=ctk.CTkFont(weight="bold"),
+        )
+        filter_label.pack(side="left")
 
         self.filter_menu = ctk.CTkOptionMenu(
             search_frame,
             values=["Alle", "INFO", "ERROR", "SUCCESS", "WARNING", "DEBUG"],
             command=self.apply_filters,
-            width=130
+            width=150,
+            height=32,
         )
         self.filter_menu.pack(side="left", padx=(10, 0))
 
-        # Button container
-        button_container = ctk.CTkFrame(self, fg_color="transparent")
-        button_container.pack(fill="x")
+        # Button container with better organization
+        button_container = ctk.CTkFrame(main_container)
+        button_container.pack(fill="x", pady=(0, 15))
 
         # Left side controls
         left_controls = ctk.CTkFrame(button_container, fg_color="transparent")
-        left_controls.pack(side="left", padx=(20, 0), pady=(20, 0))
-        
+        left_controls.pack(side="left", padx=15, pady=15)
+
         self.auto_refresh_switch = ctk.CTkSwitch(
             left_controls,
-            text="Auto-Refresh",
-            command=self.toggle_auto_refresh
+            text="Auto-Refresh (5s)",
+            command=self.toggle_auto_refresh,
+            font=ctk.CTkFont(weight="bold"),
         )
-        self.auto_refresh_switch.pack(side="left", padx=(0, 10))
+        self.auto_refresh_switch.pack(side="left", padx=(0, 20))
 
         self.clear_button = ctk.CTkButton(
             left_controls,
-            text="Clear",
+            text="Log leeren",
             command=self.clear_log,
-            width=130
+            width=130,
+            height=32,
         )
         self.clear_button.pack(side="left", padx=(0, 10))
 
         self.export_button = ctk.CTkButton(
             left_controls,
-            text="Export",
+            text="Exportieren",
             command=self.export_log,
-            width=130
+            width=130,
+            height=32,
         )
         self.export_button.pack(side="left")
 
         # Right side controls
+        right_controls = ctk.CTkFrame(button_container, fg_color="transparent")
+        right_controls.pack(side="right", padx=15, pady=15)
+
         self.scan_button = ctk.CTkButton(
-            button_container,
+            right_controls,
             text="Aktualisieren",
             command=self.refresh,
-            width=130
+            width=130,
+            height=32,
         )
-        self.scan_button.pack(side="right", padx=(0, 20), pady=(20, 0))
+        self.scan_button.pack(side="right")
 
         # Status label with statistics
         self.status_label = ctk.CTkLabel(
-            self,
+            main_container,
             text="",
-            text_color="gray70"
+            text_color="gray70",
+            height=25,
+            anchor="w",
+            justify="left",
         )
-        self.status_label.pack(pady=(5, 0))
+        self.status_label.pack(fill="x", pady=(0, 10))
 
-        text_container = ctk.CTkFrame(self, fg_color="transparent")
+        # Text container with better styling
+        text_container = ctk.CTkFrame(main_container)
         text_container.pack(fill="both", expand=True)
+
+        # Add a label for the log content
+        log_header = ctk.CTkLabel(
+            text_container,
+            text="Log-Einträge",
+            font=ctk.CTkFont(weight="bold"),
+            anchor="w",
+        )
+        log_header.pack(anchor="w", padx=15, pady=(15, 0))
 
         self.textbox = ctk.CTkTextbox(
             text_container,
-            font=("Courier", 12)
+            font=("Courier", 12),
         )
-        self.textbox.pack(padx=20, pady=20, fill="both", expand=True)
+        self.textbox.pack(padx=15, pady=(5, 15), fill="both", expand=True)
         self.after(100, self.refresh)
 
     def parse_log_time(self, line: str) -> datetime:
         try:
-            time_str = re.search(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', line)
+            time_str = re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", line)
             if time_str:
-                return datetime.strptime(time_str.group(), '%Y-%m-%d %H:%M:%S')
+                return datetime.strptime(time_str.group(), "%Y-%m-%d %H:%M:%S")
         except Exception:
             pass
         return datetime.now()
@@ -155,17 +224,17 @@ class AdminFrame(ctk.CTkFrame):
     def apply_time_filter(self, lines: List[str]) -> List[str]:
         time_filter = self.time_filter.get()
         now = datetime.now()
-        
+
         if time_filter == "Gesamt":
             return lines
-            
+
         time_filters = {
             "Letzte Stunde": lambda dt: now - dt <= timedelta(hours=1),
             "Heute": lambda dt: dt.date() == now.date(),
             "Letzten 24h": lambda dt: now - dt <= timedelta(days=1),
-            "Diese Woche": lambda dt: now - dt <= timedelta(weeks=1)
+            "Diese Woche": lambda dt: now - dt <= timedelta(weeks=1),
         }
-        
+
         filter_func = time_filters.get(time_filter)
         if filter_func:
             return [line for line in lines if filter_func(self.parse_log_time(line))]
@@ -176,7 +245,7 @@ class AdminFrame(ctk.CTkFrame):
             self.stats_window = tk.Toplevel(self)
             self.stats_window.title("Log Statistiken")
             self.stats_window.geometry("400x500")
-            
+
             # Calculate statistics with improved log level counting
             log_levels = defaultdict(int)
             level_patterns = {
@@ -184,78 +253,105 @@ class AdminFrame(ctk.CTkFrame):
                 "ERROR": r"\| ERROR\s+\|",
                 "SUCCESS": r"\| SUCCESS\s+\|",
                 "WARNING": r"\| WARNING\s+\|",
-                "DEBUG": r"\| DEBUG\s+\|"
+                "DEBUG": r"\| DEBUG\s+\|",
             }
-            
+
             for line in self.log_lines:
                 for level, pattern in level_patterns.items():
                     if re.search(pattern, line):
                         log_levels[level] += 1
                         break  # Each line should only match one level
-            
+
             # Time-based statistics
             now = datetime.now()
-            last_hour = len([line for line in self.log_lines 
-                           if now - self.parse_log_time(line) <= timedelta(hours=1)])
-            last_day = len([line for line in self.log_lines 
-                          if now - self.parse_log_time(line) <= timedelta(days=1)])
-            
+            last_hour = len(
+                [
+                    line
+                    for line in self.log_lines
+                    if now - self.parse_log_time(line) <= timedelta(hours=1)
+                ]
+            )
+            last_day = len(
+                [
+                    line
+                    for line in self.log_lines
+                    if now - self.parse_log_time(line) <= timedelta(days=1)
+                ]
+            )
+
             # Create statistics display
             stats_frame = ctk.CTkFrame(self.stats_window)
             stats_frame.pack(fill="both", expand=True, padx=20, pady=20)
-            
+
             # Log level distribution
-            ctk.CTkLabel(stats_frame, text="Log Level Verteilung", font=("", 16, "bold")).pack(pady=(0, 10))
-            
+            ctk.CTkLabel(
+                stats_frame, text="Log Level Verteilung", font=("", 16, "bold")
+            ).pack(pady=(0, 10))
+
             # Keep consistent order and only show levels that exist
             ordered_levels = ["INFO", "ERROR", "SUCCESS", "WARNING", "DEBUG"]
             max_count = max(log_levels.values()) if log_levels else 1
-            
+
             for level in ordered_levels:
                 count = log_levels[level]
                 if count > 0:  # Only show levels that have entries
                     frame = ctk.CTkFrame(stats_frame, fg_color="transparent")
                     frame.pack(fill="x", pady=2)
-                    
+
                     # Level label
                     ctk.CTkLabel(frame, text=f"{level}:", width=80).pack(side="left")
-                    
+
                     # Progress bar
                     progress = ctk.CTkProgressBar(frame, width=200)
                     progress.pack(side="left", padx=10)
                     progress.set(count / max_count)
-                    
+
                     # Count label with appropriate color
-                    color = {"SUCCESS": "green", "ERROR": "red", "INFO": "gray70",
-                            "WARNING": "orange", "DEBUG": "blue"}[level]
-                    ctk.CTkLabel(frame, text=str(count), text_color=color).pack(side="left")
-            
+                    color = {
+                        "SUCCESS": "green",
+                        "ERROR": "red",
+                        "INFO": "gray70",
+                        "WARNING": "orange",
+                        "DEBUG": "blue",
+                    }[level]
+                    ctk.CTkLabel(frame, text=str(count), text_color=color).pack(
+                        side="left"
+                    )
+
             # Time-based statistics
-            ctk.CTkLabel(stats_frame, text="\nZeitbasierte Statistiken", font=("", 16, "bold")).pack(pady=(20, 10))
-            ctk.CTkLabel(stats_frame, text=f"Logs in der letzten Stunde: {last_hour}").pack()
-            ctk.CTkLabel(stats_frame, text=f"Logs in den letzten 24 Stunden: {last_day}").pack()
-            ctk.CTkLabel(stats_frame, text=f"Gesamtzahl der Logs: {len(self.log_lines)}").pack()
+            ctk.CTkLabel(
+                stats_frame, text="\nZeitbasierte Statistiken", font=("", 16, "bold")
+            ).pack(pady=(20, 10))
+            ctk.CTkLabel(
+                stats_frame, text=f"Logs in der letzten Stunde: {last_hour}"
+            ).pack()
+            ctk.CTkLabel(
+                stats_frame, text=f"Logs in den letzten 24 Stunden: {last_day}"
+            ).pack()
+            ctk.CTkLabel(
+                stats_frame, text=f"Gesamtzahl der Logs: {len(self.log_lines)}"
+            ).pack()
 
     def show_visualization(self):
         if self.viz_window is None or not tk.Toplevel.winfo_exists(self.viz_window):
             self.viz_window = tk.Toplevel(self)
             self.viz_window.title("Log Visualisierung")
             self.viz_window.geometry("800x600")
-            
+
             # Create notebook for multiple charts
             self.viz_notebook = ttk.Notebook(self.viz_window)
             self.viz_notebook.pack(fill="both", expand=True, padx=10, pady=10)
-            
+
             # Log Level Distribution Tab
             level_tab = ttk.Frame(self.viz_notebook)
             self.viz_notebook.add(level_tab, text="Log Level Verteilung")
             self.create_level_distribution_chart(level_tab)
-            
+
             # Time Distribution Tab
             time_tab = ttk.Frame(self.viz_notebook)
             self.viz_notebook.add(time_tab, text="Zeitliche Verteilung")
             self.create_time_distribution_chart(time_tab)
-            
+
             # Error Trend Tab
             error_tab = ttk.Frame(self.viz_notebook)
             self.viz_notebook.add(error_tab, text="Fehler Trend")
@@ -273,7 +369,7 @@ class AdminFrame(ctk.CTkFrame):
     def create_level_distribution_chart(self, parent):
         fig = Figure(figsize=(8, 4))
         ax = fig.add_subplot(111)
-        
+
         # Improved log level counting
         log_levels = defaultdict(int)
         level_patterns = {
@@ -281,15 +377,15 @@ class AdminFrame(ctk.CTkFrame):
             "ERROR": r"\| ERROR\s+\|",
             "SUCCESS": r"\| SUCCESS\s+\|",
             "WARNING": r"\| WARNING\s+\|",
-            "DEBUG": r"\| DEBUG\s+\|"
+            "DEBUG": r"\| DEBUG\s+\|",
         }
-        
+
         for line in self.log_lines:
             for level, pattern in level_patterns.items():
                 if re.search(pattern, line):
                     log_levels[level] += 1
                     break  # Each line should only match one level
-        
+
         # Keep consistent order
         ordered_levels = ["INFO", "ERROR", "SUCCESS", "WARNING", "DEBUG"]
         levels = [level for level in ordered_levels if level in log_levels]
@@ -299,21 +395,25 @@ class AdminFrame(ctk.CTkFrame):
             "ERROR": "red",
             "SUCCESS": "green",
             "WARNING": "orange",
-            "DEBUG": "blue"
+            "DEBUG": "blue",
         }
         bar_colors = [colors[level] for level in levels]
-        
+
         bars = ax.bar(levels, values, color=bar_colors)
         ax.set_title("Log Level Verteilung")
         ax.set_ylabel("Anzahl")
-        
+
         # Add value labels on top of bars
         for bar in bars:
             height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{int(height)}',
-                   ha='center', va='bottom')
-        
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height,
+                f"{int(height)}",
+                ha="center",
+                va="bottom",
+            )
+
         canvas = FigureCanvasTkAgg(fig, parent)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
@@ -321,7 +421,7 @@ class AdminFrame(ctk.CTkFrame):
     def create_time_distribution_chart(self, parent):
         fig = Figure(figsize=(8, 4))
         ax = fig.add_subplot(111)
-        
+
         # Group logs by hour
         hour_distribution = defaultdict(int)
         now = datetime.now()
@@ -330,16 +430,16 @@ class AdminFrame(ctk.CTkFrame):
             if now - log_time <= timedelta(days=1):
                 hour = log_time.strftime("%H:00")
                 hour_distribution[hour] += 1
-        
+
         hours = sorted(hour_distribution.keys())
         counts = [hour_distribution[hour] for hour in hours]
-        
-        ax.plot(hours, counts, marker='o')
+
+        ax.plot(hours, counts, marker="o")
         ax.set_title("Log Verteilung (24 Stunden)")
         ax.set_xlabel("Stunde")
         ax.set_ylabel("Anzahl Logs")
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
-        
+
         canvas = FigureCanvasTkAgg(fig, parent)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
@@ -347,7 +447,7 @@ class AdminFrame(ctk.CTkFrame):
     def create_error_trend_chart(self, parent):
         fig = Figure(figsize=(8, 4))
         ax = fig.add_subplot(111)
-        
+
         # Group errors by hour
         error_trend = defaultdict(int)
         now = datetime.now()
@@ -357,17 +457,17 @@ class AdminFrame(ctk.CTkFrame):
                 if now - log_time <= timedelta(days=1):
                     hour = log_time.strftime("%H:00")
                     error_trend[hour] += 1
-        
+
         hours = sorted(error_trend.keys())
         counts = [error_trend[hour] for hour in hours]
-        
-        ax.plot(hours, counts, marker='o', color='red')
-        ax.fill_between(hours, counts, alpha=0.2, color='red')
+
+        ax.plot(hours, counts, marker="o", color="red")
+        ax.fill_between(hours, counts, alpha=0.2, color="red")
         ax.set_title("Fehler Trend (24 Stunden)")
         ax.set_xlabel("Stunde")
         ax.set_ylabel("Anzahl Fehler")
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
-        
+
         canvas = FigureCanvasTkAgg(fig, parent)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
@@ -397,10 +497,12 @@ class AdminFrame(ctk.CTkFrame):
 
         # Apply time filter first
         filtered_lines = self.apply_time_filter(self.log_lines)
-        
+
         # Then apply search and log level filters
         if search_text:
-            filtered_lines = [line for line in filtered_lines if search_text in line.lower()]
+            filtered_lines = [
+                line for line in filtered_lines if search_text in line.lower()
+            ]
         if log_level != "Alle":
             filtered_lines = [line for line in filtered_lines if log_level in line]
 
@@ -410,7 +512,7 @@ class AdminFrame(ctk.CTkFrame):
         self.textbox.see("end")  # Auto-scroll to the end
         # Color coding for different log levels
         self.highlight_log_levels()
-        
+
         # Update status with filter statistics
         total = len(filtered_lines)
         original = len(self.log_lines)
@@ -438,11 +540,15 @@ class AdminFrame(ctk.CTkFrame):
     def export_log(self):
         file_path = filedialog.asksaveasfilename(
             defaultextension=".txt",
-            filetypes=[("Text files", "*.txt"), ("Log files", "*.log"), ("All files", "*.*")]
+            filetypes=[
+                ("Text files", "*.txt"),
+                ("Log files", "*.log"),
+                ("All files", "*.*"),
+            ],
         )
         if file_path:
             try:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write("\n".join(self.log_lines))
                 self.update_status(f"Log exported to {file_path}", "green")
             except Exception as e:
@@ -458,10 +564,12 @@ class AdminFrame(ctk.CTkFrame):
                 rv.raise_for_status()
                 self.log_lines = rv.json().get("lines", [])
                 self.after(0, lambda: self.update_textbox(self.log_lines))
-                self.after(0, lambda: self.update_status(
-                    f"Last updated: {datetime.now().strftime('%H:%M:%S')}", 
-                    "green"
-                ))
+                self.after(
+                    0,
+                    lambda: self.update_status(
+                        f"Last updated: {datetime.now().strftime('%H:%M:%S')}", "green"
+                    ),
+                )
                 # Update visualization if window is open
                 if self.viz_window and tk.Toplevel.winfo_exists(self.viz_window):
                     self.after(0, self.update_visualization)
@@ -486,7 +594,7 @@ class AdminFrame(ctk.CTkFrame):
 
     def update_visualization(self):
         """Update all visualization charts with current data."""
-        if not hasattr(self, 'viz_notebook'):
+        if not hasattr(self, "viz_notebook"):
             return
 
         # Get the current tab
